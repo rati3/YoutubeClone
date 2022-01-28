@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use common\models\query\CommentQuery;
 use Imagine\Gd\Image;
 use Imagine\Gd\Imagine;
 use Imagine\Image\Box;
@@ -55,11 +56,11 @@ class Video extends \yii\db\ActiveRecord
     public function behaviors()
     {
         return [
-          TimestampBehavior::class,
-          [
-              'class' => BlameableBehavior::class,
-              'updatedByAttribute' => false
-          ]
+            TimestampBehavior::class,
+            [
+                'class' => BlameableBehavior::class,
+                'updatedByAttribute' => false
+            ]
         ];
     }
 
@@ -140,6 +141,12 @@ class Video extends \yii\db\ActiveRecord
             ->disliked();
 
     }
+
+    /** @return CommentQuery */
+    public function getComments()
+    {
+        return $this->hasMany(Comment::class, ['video_id' => 'video_id']);
+    }
     /**
      * {@inheritdoc}
      * @return \common\models\query\VideoQuery the active query used by this AR class.
@@ -177,7 +184,7 @@ class Video extends \yii\db\ActiveRecord
                 FileHelper::createDirectory(dirname($thumbnailPath));
             }
             $this->thumbnail->saveAs($thumbnailPath);
-                \yii\imagine\Image::getImagine()
+            \yii\imagine\Image::getImagine()
                 ->open($thumbnailPath)
                 ->thumbnail(new Box(1280, 1280))
                 ->save();
@@ -223,4 +230,11 @@ class Video extends \yii\db\ActiveRecord
             ->disliked()
             ->one();
     }
+
+    public function belongsTo($userId)
+    {
+        return $this->created_by === $userId;
+    }
+
+
 }

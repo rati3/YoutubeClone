@@ -4,6 +4,7 @@
 namespace frontend\controllers;
 
 
+use common\models\Comment;
 use common\models\Video;
 use common\models\VideoLikes;
 use common\models\VideoView;
@@ -23,8 +24,8 @@ class VideoController extends Controller
                 'only' => ['likes', 'dislike', 'history'],
                 'rules' => [
                     [
-                    'allow' => true,
-                    'roles' => ['@']
+                        'allow' => true,
+                        'roles' => ['@']
                     ]
                 ]
             ],
@@ -71,8 +72,15 @@ class VideoController extends Controller
             ->limit(10)
             ->all();
 
+        $comments = $video
+            ->getComments()
+            ->with(['createdBy'])
+            ->parent()
+            ->latest()
+            ->all();
         return $this->render('view', [
             'model' => $video,
+            'comments' => $comments,
             'similarVideos' => $similarVideos
         ]);
     }
@@ -151,7 +159,7 @@ class VideoController extends Controller
             ->innerJoin("(SELECT video_id, MAX(created_at) as max_date FROM video_view
                 WHERE user_id = :userId
                 GROUP BY video_id) vv", 'vv.video_id = v.video_id', [
-                    'userId' => \Yii::$app->user->id
+                'userId' => \Yii::$app->user->id
             ])
             ->orderBy("vv.max_date DESC");
 
@@ -184,4 +192,5 @@ class VideoController extends Controller
         $videoLikes->created_at = time();
         $videoLikes->save();
     }
+
 }
